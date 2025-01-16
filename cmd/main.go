@@ -3,52 +3,47 @@ package main
 import (
 	"fmt"
 	"math/rand"
-	"os"
-	"os/exec"
+	"strings"
 	"time"
+
+	"github.com/inancgumus/screen"
 )
 
-const size_x = 16
-const size_y = 16
+var size_x = 32
+var size_y = 32
+
+const alive_chance float32 = 0.3
 
 var generations int32 = 0
 
-var board [][]int8 = make([][]int8, size_y)
+var board [][]int = make([][]int, size_y)
 
 func main() {
 
 	initBoard(board)
-
 	randomizeBoard(board)
-
+	screen.Clear()
 	drawBoard(board)
-
 	time.Sleep(5 * time.Second)
 
-	for range 500 {
+	for range 1000 {
 
 		generations++
-
-		// Clear screen
-		cmd := exec.Command("cmd", "/c", "cls")
-		cmd.Stdout = os.Stdout
-		cmd.Run()
 
 		// Iterate and display
 		iterateGameOfLife(board)
 		drawBoard(board)
-
 		// Sleep to achieve almost desired framerate
 		time.Sleep(1000 / 24 * time.Millisecond)
 
 	}
 
-	//drawBoard(board)
-
 	fmt.Println("Done!")
 }
 
-func initBoard(board [][]int8) {
+func initBoard(board [][]int) {
+	size_x, size_y = screen.Size()
+	size_x /= 2
 	println("Initializing board...")
 	for y := range board {
 		for range size_x {
@@ -57,7 +52,7 @@ func initBoard(board [][]int8) {
 	}
 }
 
-func setAlive(board [][]int8, x int, y int) {
+func setAlive(board [][]int, x int, y int) {
 	if len(board) > y && len(board[y]) > x {
 		board[y][x] = 1
 	} else {
@@ -66,7 +61,7 @@ func setAlive(board [][]int8, x int, y int) {
 
 }
 
-func setDead(board [][]int8, x int, y int) {
+func setDead(board [][]int, x int, y int) {
 	if len(board) > y && len(board[y]) > x {
 		board[y][x] = 0
 	} else {
@@ -74,24 +69,21 @@ func setDead(board [][]int8, x int, y int) {
 	}
 }
 
-func randomizeBoard(board [][]int8) {
+func randomizeBoard(board [][]int) {
 	for y := range board {
 		for x := range board[y] {
 			rNumber := rand.Float32()
-			if rNumber <= 0.5 {
-				board[y][x] = 0
-			} else {
+			if rNumber <= alive_chance {
 				board[y][x] = 1
+			} else {
+				board[y][x] = 0
 			}
 
-			if x == size_x-1 {
-				fmt.Print("\n")
-			}
 		}
 	}
 }
 
-func checkState(board [][]int8, x int8, y int8) int8 {
+func checkState(board [][]int, x int, y int) int {
 	//println("Checking state...", x, y)
 	if int(x) >= 0 && int(y) >= 0 && len(board) > int(y) && len(board[y]) > int(x) {
 		return board[y][x]
@@ -107,27 +99,30 @@ func checkState(board [][]int8, x int8, y int8) int8 {
 	return -1
 }
 
-func drawBoard(board [][]int8) {
+func drawBoard(board [][]int) {
+	screen.Clear()
+	var sb strings.Builder
 	println("\n")
 	for y := range board {
 		for x := range board[y] {
 			if board[y][x] == 0 {
-				fmt.Print("- ")
+				sb.WriteString("- ")
 			} else {
-				fmt.Print("X ")
+				sb.WriteString("X ")
 			}
 
 			if x == size_x-1 {
-				fmt.Print("\n")
+				sb.WriteString("\n")
 			}
 		}
 	}
+	fmt.Print(sb.String())
 	fmt.Printf("Generation %d\n", generations)
 }
 
-func checkNeighbours(testBoard [][]int8, x int8, y int8) int8 {
+func checkNeighbours(testBoard [][]int, x int, y int) int {
 	//println("Checking neighbours...")
-	var neighbours int8 = 0
+	var neighbours int = 0
 	if checkState(testBoard, x+1, y) == 1 {
 		neighbours++
 	}
@@ -155,21 +150,19 @@ func checkNeighbours(testBoard [][]int8, x int8, y int8) int8 {
 	return neighbours
 }
 
-func iterateGameOfLife(board [][]int8) {
-	var originalState [][]int8 = make([][]int8, len(board))
+func iterateGameOfLife(board [][]int) {
+	var originalState [][]int = make([][]int, len(board))
 	for y := range board {
-		originalState[y] = make([]int8, len(board[y]))
+		originalState[y] = make([]int, len(board[y]))
 	}
 	for y := range board {
 		copy(originalState[y], board[y])
 	}
-	//print("\nPrinting original")
-	//drawBoard(originalState)
 
 	for y := range originalState {
 		for x := range originalState[y] {
-			var neighbours int8 = checkNeighbours(originalState, int8(x), int8(y))
-			
+			var neighbours int = checkNeighbours(originalState, int(x), int(y))
+
 			if originalState[y][x] == 0 {
 				// Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
 				if neighbours == 3 {
@@ -195,6 +188,5 @@ func iterateGameOfLife(board [][]int8) {
 			}
 		}
 	}
-	//print("\nPrinting original")
-	//drawBoard(originalState)
+
 }
