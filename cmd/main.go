@@ -34,7 +34,7 @@ func main() {
 		iterateGameOfLife(board)
 		drawBoard(board)
 		// Sleep to achieve almost desired framerate
-		time.Sleep(1000 / 24 * time.Millisecond)
+		time.Sleep(1000 / 12 * time.Millisecond)
 
 	}
 
